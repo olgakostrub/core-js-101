@@ -6,7 +6,6 @@
  *                                                                                                *
  ************************************************************************************************ */
 
-
 /**
  * Returns the rectagle object with width and height parameters and getArea() method
  *
@@ -20,10 +19,15 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea() {
+      return this.height * this.width;
+    },
+  };
 }
-
 
 /**
  * Returns the JSON representation of specified object
@@ -35,10 +39,9 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
-
 
 /**
  * Returns the object of specified type from JSON representation
@@ -51,10 +54,9 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return new proto.constructor(...Object.values(JSON.parse(json)));
 }
-
 
 /**
  * Css selectors builder
@@ -111,35 +113,81 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  stringFormat: '',
+
+  validate(order) {
+    if (order < this.order) {
+      throw new Error(
+        // eslint-disable-next-line comma-dangle
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    if (order === this.order && [6, 2, 1].includes(order)) {
+      throw new Error(
+        // eslint-disable-next-line comma-dangle
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    this.validate(1);
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${this.stringFormat}${value}`;
+    selector.order = 1;
+    return selector;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    this.validate(2);
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${this.stringFormat}#${value}`;
+    selector.order = 2;
+    return selector;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    this.validate(3);
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${this.stringFormat}.${value}`;
+    selector.order = 3;
+    return selector;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    this.validate(4);
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${this.stringFormat}[${value}]`;
+    selector.order = 4;
+    return selector;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    this.validate(5);
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${this.stringFormat}:${value}`;
+    selector.order = 5;
+    return selector;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    this.validate(6);
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${this.stringFormat}::${value}`;
+    selector.order = 6;
+    return selector;
+  },
+
+  combine(selector1, combinator, selector2) {
+    const selector = Object.create(cssSelectorBuilder);
+    selector.stringFormat = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return selector;
+  },
+
+  stringify() {
+    return this.stringFormat;
   },
 };
-
 
 module.exports = {
   Rectangle,
